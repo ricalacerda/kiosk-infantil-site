@@ -1,0 +1,14 @@
+{
+  "apps": [
+    { "id": "historias", "titulo": "Histórias", "icone": "assets/icon-historias.svg" }
+  ],
+  "historias": [
+    {
+      "id": "exemplo-1",
+      "titulo": "História de Teste",
+      "capa": "assets/capa-exemplo.svg",
+      "audio": "audio/exemplo.wav",
+      "duracaoSegundos": 8
+    }
+  ]
+}

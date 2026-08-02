@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Área Infantil</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<main id="view-desktop" class="view">
+  <h1 class="titulo-area">Área Infantil</h1>
+  <div id="grade-apps" class="grade"></div>
+</main>
+
+<main id="view-historias" class="view hidden">
+  <button class="botao-voltar" data-voltar="desktop">← Voltar</button>
+  <h1 class="titulo-area">Histórias</h1>
+  <div id="grade-historias" class="grade"></div>
+</main>
+
+<main id="view-player" class="view hidden">
+  <button class="botao-voltar" data-voltar="historias">← Voltar</button>
+  <h1 id="player-titulo" class="titulo-area"></h1>
+  <img id="player-capa" class="player-capa" alt="">
+  <audio id="player-audio"></audio>
+  <div class="player-controles">
+    <button id="player-playpause" class="botao-play" aria-label="Tocar/pausar">▶</button>
+    <input id="player-timeline" type="range" min="0" max="100" value="0" aria-label="Linha do tempo da história">
+    <span id="player-tempo" class="player-tempo">0:00 / 0:00</span>
+  </div>
+</main>
+
+<script src="js/app.js"></script>
+</body>
+</html>
