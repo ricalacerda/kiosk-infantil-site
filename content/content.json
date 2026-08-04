@@ -1,6 +1,7 @@
 {
   "apps": [
-    { "id": "historias", "titulo": "Histórias", "icone": "assets/icon-historias.svg" }
+    { "id": "historias", "titulo": "Histórias", "icone": "assets/icon-historias.svg" },
+    { "id": "jogos", "titulo": "Jogos", "icone": "assets/icon-jogos.svg" }
   ],
   "historias": [
     {
@@ -10,5 +11,8 @@
       "audio": "audio/exemplo.wav",
       "duracaoSegundos": 8
     }
+  ],
+  "jogos": [
+    { "id": "cobrinha", "titulo": "Cobrinha", "icone": "assets/icon-cobrinha.svg" }
   ]
 }

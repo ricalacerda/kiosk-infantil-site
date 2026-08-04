@@ -9,6 +9,9 @@
 <body>
 
 <main id="view-desktop" class="view">
+  <button id="botao-config" class="botao-config" aria-label="Configurações">
+    <img src="assets/icon-config.svg" alt="">
+  </button>
   <h1 class="titulo-area">Área Infantil</h1>
   <div id="grade-apps" class="grade"></div>
 </main>
@@ -18,6 +21,44 @@
   <h1 class="titulo-area">Histórias</h1>
   <div id="grade-historias" class="grade"></div>
 </main>
+
+<main id="view-jogos" class="view hidden">
+  <button class="botao-voltar" data-voltar="desktop">← Voltar</button>
+  <h1 class="titulo-area">Jogos</h1>
+  <div id="grade-jogos" class="grade"></div>
+</main>
+
+<main id="view-cobrinha" class="view hidden">
+  <button class="botao-voltar" data-voltar="jogos">← Voltar</button>
+  <div class="jogo-cobrinha">
+    <span id="cobrinha-pontos" class="jogo-pontos">Pontos: 0</span>
+    <canvas id="cobrinha-canvas" width="260" height="260"></canvas>
+    <div id="cobrinha-fim" class="jogo-fim hidden">
+      <p>Fim de jogo!</p>
+      <button id="cobrinha-reiniciar" class="botao-voltar">Jogar de novo</button>
+    </div>
+    <div class="dpad">
+      <button class="dpad-btn dpad-cima" data-dir="cima" aria-label="Cima">▲</button>
+      <div class="dpad-meio">
+        <button class="dpad-btn dpad-esquerda" data-dir="esquerda" aria-label="Esquerda">◀</button>
+        <button class="dpad-btn dpad-direita" data-dir="direita" aria-label="Direita">▶</button>
+      </div>
+      <button class="dpad-btn dpad-baixo" data-dir="baixo" aria-label="Baixo">▼</button>
+    </div>
+  </div>
+</main>
+
+<div id="modal-pin" class="modal hidden">
+  <div class="modal-caixa">
+    <p>Digite o PIN dos pais</p>
+    <input id="pin-input" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="8" autocomplete="off">
+    <p id="pin-erro" class="pin-erro hidden">PIN incorreto</p>
+    <div class="modal-botoes">
+      <button id="pin-cancelar" class="botao-voltar">Cancelar</button>
+      <button id="pin-confirmar" class="botao-play-pequeno">Entrar</button>
+    </div>
+  </div>
+</div>
 
 <main id="view-player" class="view hidden">
   <button class="botao-voltar" data-voltar="historias">← Voltar</button>
