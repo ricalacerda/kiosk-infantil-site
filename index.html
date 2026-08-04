@@ -48,6 +48,26 @@
   </div>
 </main>
 
+<main id="view-tetris" class="view hidden">
+  <button class="botao-voltar" data-voltar="jogos">← Voltar</button>
+  <div class="jogo-tetris">
+    <span id="tetris-pontos" class="jogo-pontos">Pontos: 0</span>
+    <canvas id="tetris-canvas" width="180" height="320"></canvas>
+    <div id="tetris-fim" class="jogo-fim hidden">
+      <p>Fim de jogo!</p>
+      <button id="tetris-reiniciar" class="botao-voltar">Jogar de novo</button>
+    </div>
+    <div class="dpad">
+      <button class="dpad-btn" data-tetris="girar" aria-label="Girar">↻</button>
+      <div class="dpad-meio">
+        <button class="dpad-btn" data-tetris="esquerda" aria-label="Esquerda">◀</button>
+        <button class="dpad-btn" data-tetris="direita" aria-label="Direita">▶</button>
+      </div>
+      <button class="dpad-btn" data-tetris="baixo" aria-label="Descer">▼</button>
+    </div>
+  </div>
+</main>
+
 <div id="modal-pin" class="modal hidden">
   <div class="modal-caixa">
     <p>Digite o PIN dos pais</p>
