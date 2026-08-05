@@ -32,10 +32,13 @@
   <button class="botao-voltar" data-voltar="jogos">← Voltar</button>
   <div class="jogo-cobrinha">
     <span id="cobrinha-pontos" class="jogo-pontos">Pontos: 0</span>
-    <canvas id="cobrinha-canvas" width="260" height="260"></canvas>
+    <canvas id="cobrinha-canvas" width="338" height="338"></canvas>
     <div id="cobrinha-fim" class="jogo-fim hidden">
       <p>Fim de jogo!</p>
-      <button id="cobrinha-reiniciar" class="botao-voltar">Jogar de novo</button>
+      <div class="modal-botoes">
+        <button id="cobrinha-reiniciar" class="botao-play-pequeno">Jogar de novo</button>
+        <button id="cobrinha-fim-voltar" class="botao-voltar">Voltar</button>
+      </div>
     </div>
     <div class="dpad">
       <button class="dpad-btn dpad-cima" data-dir="cima" aria-label="Cima">▲</button>
@@ -55,7 +58,10 @@
     <canvas id="tetris-canvas" width="180" height="320"></canvas>
     <div id="tetris-fim" class="jogo-fim hidden">
       <p>Fim de jogo!</p>
-      <button id="tetris-reiniciar" class="botao-voltar">Jogar de novo</button>
+      <div class="modal-botoes">
+        <button id="tetris-reiniciar" class="botao-play-pequeno">Jogar de novo</button>
+        <button id="tetris-fim-voltar" class="botao-voltar">Voltar</button>
+      </div>
     </div>
     <div class="dpad">
       <button class="dpad-btn" data-tetris="girar" aria-label="Girar">↻</button>
@@ -64,6 +70,21 @@
         <button class="dpad-btn" data-tetris="direita" aria-label="Direita">▶</button>
       </div>
       <button class="dpad-btn" data-tetris="baixo" aria-label="Descer">▼</button>
+    </div>
+  </div>
+</main>
+
+<main id="view-damas" class="view hidden">
+  <button class="botao-voltar" data-voltar="jogos">← Voltar</button>
+  <div class="jogo-damas">
+    <span id="damas-status" class="damas-status">Sua vez</span>
+    <div id="damas-tabuleiro" class="damas-tabuleiro"></div>
+    <div id="damas-fim" class="jogo-fim hidden">
+      <p id="damas-fim-texto">Fim de jogo!</p>
+      <div class="modal-botoes">
+        <button id="damas-reiniciar" class="botao-play-pequeno">Jogar de novo</button>
+        <button id="damas-fim-voltar" class="botao-voltar">Voltar</button>
+      </div>
     </div>
   </div>
 </main>

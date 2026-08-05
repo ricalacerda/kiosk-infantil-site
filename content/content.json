@@ -14,6 +14,7 @@
   ],
   "jogos": [
     { "id": "cobrinha", "titulo": "Cobrinha", "icone": "assets/icon-cobrinha.svg" },
-    { "id": "tetris", "titulo": "Tetris", "icone": "assets/icon-tetris.svg" }
+    { "id": "tetris", "titulo": "Tetris", "icone": "assets/icon-tetris.svg" },
+    { "id": "damas", "titulo": "Damas", "icone": "assets/icon-damas.svg" }
   ]
 }

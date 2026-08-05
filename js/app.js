@@ -67,6 +67,9 @@ function abrirJogo(id) {
   } else if (id === 'tetris') {
     mostrarView('tetris');
     iniciarTetris();
+  } else if (id === 'damas') {
+    mostrarView('damas');
+    iniciarDamas();
   }
 }
 
@@ -140,6 +143,7 @@ function configurarNavegacao() {
       $('#player-audio').pause();
       pararCobrinha();
       pararTetris();
+      pararDamas();
       mostrarView(btn.dataset.voltar);
     });
   });
@@ -150,7 +154,7 @@ function configurarNavegacao() {
 const cobrinha = {
   canvas: null,
   ctx: null,
-  cell: 20,
+  cell: 26,
   cols: 13,
   linhas: 13,
   cobra: [],
@@ -269,6 +273,10 @@ function configurarCobrinha() {
     btn.addEventListener('click', () => mudarDirecaoCobrinha(btn.dataset.dir));
   });
   $('#cobrinha-reiniciar').addEventListener('click', iniciarCobrinha);
+  $('#cobrinha-fim-voltar').addEventListener('click', () => {
+    pararCobrinha();
+    mostrarView('jogos');
+  });
 
   let toqueInicio = null;
   const canvas = $('#cobrinha-canvas');
@@ -506,6 +514,10 @@ function configurarTetris() {
     });
   });
   $('#tetris-reiniciar').addEventListener('click', iniciarTetris);
+  $('#tetris-fim-voltar').addEventListener('click', () => {
+    pararTetris();
+    mostrarView('jogos');
+  });
 
   let toqueInicio = null;
   const canvas = $('#tetris-canvas');
@@ -526,6 +538,224 @@ function configurarTetris() {
       descerTetris();
     }
     toqueInicio = null;
+  });
+}
+
+// --- Jogo de Damas ---
+
+const damas = {
+  tabuleiro: [],
+  selecionada: null,
+  destinosValidos: [],
+  vez: 'jogador',
+  fim: false,
+  timeoutBot: null,
+};
+
+function casaEscuraDamas(x, y) {
+  return (x + y) % 2 === 1;
+}
+
+function tabuleiroInicialDamas() {
+  const tabuleiro = Array.from({ length: 8 }, () => Array(8).fill(null));
+  for (let y = 0; y < 8; y++) {
+    for (let x = 0; x < 8; x++) {
+      if (!casaEscuraDamas(x, y)) continue;
+      if (y < 3) tabuleiro[y][x] = { cor: 'bot', dama: false };
+      if (y > 4) tabuleiro[y][x] = { cor: 'jogador', dama: false };
+    }
+  }
+  return tabuleiro;
+}
+
+function direcoesDaPecaDamas(peca) {
+  if (peca.dama) return [[-1, -1], [1, -1], [-1, 1], [1, 1]];
+  return peca.cor === 'jogador' ? [[-1, -1], [1, -1]] : [[-1, 1], [1, 1]];
+}
+
+function movimentosDaPecaDamas(tabuleiro, x, y) {
+  const peca = tabuleiro[y][x];
+  const simples = [];
+  const capturas = [];
+  direcoesDaPecaDamas(peca).forEach(([dx, dy]) => {
+    const nx = x + dx;
+    const ny = y + dy;
+    if (nx < 0 || nx >= 8 || ny < 0 || ny >= 8) return;
+    if (!tabuleiro[ny][nx]) {
+      simples.push({ x: nx, y: ny, captura: null });
+    } else if (tabuleiro[ny][nx].cor !== peca.cor) {
+      const jx = x + dx * 2;
+      const jy = y + dy * 2;
+      if (jx >= 0 && jx < 8 && jy >= 0 && jy < 8 && !tabuleiro[jy][jx]) {
+        capturas.push({ x: jx, y: jy, captura: { x: nx, y: ny } });
+      }
+    }
+  });
+  return { simples, capturas };
+}
+
+function todosMovimentosDamas(tabuleiro, cor) {
+  const lista = [];
+  let temCaptura = false;
+  for (let y = 0; y < 8; y++) {
+    for (let x = 0; x < 8; x++) {
+      const peca = tabuleiro[y][x];
+      if (!peca || peca.cor !== cor) continue;
+      const { simples, capturas } = movimentosDaPecaDamas(tabuleiro, x, y);
+      if (capturas.length) temCaptura = true;
+      capturas.forEach((destino) => lista.push({ origem: { x, y }, destino }));
+      simples.forEach((destino) => lista.push({ origem: { x, y }, destino }));
+    }
+  }
+  return temCaptura ? lista.filter((m) => m.destino.captura) : lista;
+}
+
+function executarMovimentoDamas(tabuleiro, mov) {
+  const peca = tabuleiro[mov.origem.y][mov.origem.x];
+  tabuleiro[mov.origem.y][mov.origem.x] = null;
+  if (mov.destino.captura) {
+    tabuleiro[mov.destino.captura.y][mov.destino.captura.x] = null;
+  }
+  const promovido = (peca.cor === 'jogador' && mov.destino.y === 0) || (peca.cor === 'bot' && mov.destino.y === 7);
+  tabuleiro[mov.destino.y][mov.destino.x] = { cor: peca.cor, dama: peca.dama || promovido };
+}
+
+function contarPecasDamas(tabuleiro, cor) {
+  let total = 0;
+  tabuleiro.forEach((linha) => linha.forEach((peca) => {
+    if (peca && peca.cor === cor) total += 1;
+  }));
+  return total;
+}
+
+function renderDamas() {
+  const container = $('#damas-tabuleiro');
+  container.innerHTML = '';
+  for (let y = 0; y < 8; y++) {
+    for (let x = 0; x < 8; x++) {
+      const casa = document.createElement('button');
+      casa.className = `damas-casa ${casaEscuraDamas(x, y) ? 'escura' : 'clara'}`;
+      casa.dataset.x = x;
+      casa.dataset.y = y;
+
+      if (damas.selecionada && damas.selecionada.x === x && damas.selecionada.y === y) {
+        casa.classList.add('selecionada');
+      }
+      if (damas.destinosValidos.some((d) => d.x === x && d.y === y)) {
+        casa.classList.add('movivel');
+      }
+
+      const peca = damas.tabuleiro[y][x];
+      if (peca) {
+        const pecaEl = document.createElement('div');
+        pecaEl.className = `peca ${peca.cor}${peca.dama ? ' dama' : ''}`;
+        casa.appendChild(pecaEl);
+      }
+
+      container.appendChild(casa);
+    }
+  }
+}
+
+function fimDeJogoDamas(vencedor) {
+  damas.fim = true;
+  const texto = vencedor === 'jogador' ? 'Você venceu! 🎉' : 'O computador venceu, jogue de novo!';
+  $('#damas-fim-texto').textContent = texto;
+  $('#damas-fim').classList.remove('hidden');
+}
+
+function verificarFimDamas() {
+  if (contarPecasDamas(damas.tabuleiro, 'bot') === 0 || todosMovimentosDamas(damas.tabuleiro, 'bot').length === 0) {
+    fimDeJogoDamas('jogador');
+    return true;
+  }
+  if (contarPecasDamas(damas.tabuleiro, 'jogador') === 0 || todosMovimentosDamas(damas.tabuleiro, 'jogador').length === 0) {
+    fimDeJogoDamas('bot');
+    return true;
+  }
+  return false;
+}
+
+function jogarBotDamas() {
+  if (damas.fim) return;
+  const movimentos = todosMovimentosDamas(damas.tabuleiro, 'bot');
+  if (movimentos.length === 0) {
+    fimDeJogoDamas('jogador');
+    return;
+  }
+  const escolhido = movimentos[Math.floor(Math.random() * movimentos.length)];
+  executarMovimentoDamas(damas.tabuleiro, escolhido);
+  renderDamas();
+  if (verificarFimDamas()) return;
+  damas.vez = 'jogador';
+  $('#damas-status').textContent = 'Sua vez';
+}
+
+function selecionarCasaDamas(x, y) {
+  if (damas.fim || damas.vez !== 'jogador') return;
+  const peca = damas.tabuleiro[y][x];
+
+  const destino = damas.destinosValidos.find((d) => d.x === x && d.y === y);
+  if (damas.selecionada && destino) {
+    executarMovimentoDamas(damas.tabuleiro, { origem: damas.selecionada, destino });
+    damas.selecionada = null;
+    damas.destinosValidos = [];
+    renderDamas();
+    if (verificarFimDamas()) return;
+    damas.vez = 'bot';
+    $('#damas-status').textContent = 'Vez do computador...';
+    damas.timeoutBot = setTimeout(jogarBotDamas, 600);
+    return;
+  }
+
+  if (peca && peca.cor === 'jogador') {
+    const movimentosPossiveis = todosMovimentosDamas(damas.tabuleiro, 'jogador');
+    const movimentosDaPeca = movimentosPossiveis.filter((m) => m.origem.x === x && m.origem.y === y);
+    if (movimentosDaPeca.length === 0) {
+      damas.selecionada = null;
+      damas.destinosValidos = [];
+    } else {
+      damas.selecionada = { x, y };
+      damas.destinosValidos = movimentosDaPeca.map((m) => m.destino);
+    }
+  } else {
+    damas.selecionada = null;
+    damas.destinosValidos = [];
+  }
+  renderDamas();
+}
+
+function pararDamas() {
+  if (damas.timeoutBot) {
+    clearTimeout(damas.timeoutBot);
+    damas.timeoutBot = null;
+  }
+  damas.fim = true;
+}
+
+function iniciarDamas() {
+  if (damas.timeoutBot) clearTimeout(damas.timeoutBot);
+  damas.tabuleiro = tabuleiroInicialDamas();
+  damas.selecionada = null;
+  damas.destinosValidos = [];
+  damas.vez = 'jogador';
+  damas.fim = false;
+  damas.timeoutBot = null;
+  $('#damas-status').textContent = 'Sua vez';
+  $('#damas-fim').classList.add('hidden');
+  renderDamas();
+}
+
+function configurarDamas() {
+  $('#damas-tabuleiro').addEventListener('click', (e) => {
+    const casa = e.target.closest('.damas-casa');
+    if (!casa) return;
+    selecionarCasaDamas(Number(casa.dataset.x), Number(casa.dataset.y));
+  });
+  $('#damas-reiniciar').addEventListener('click', iniciarDamas);
+  $('#damas-fim-voltar').addEventListener('click', () => {
+    pararDamas();
+    mostrarView('jogos');
   });
 }
 
@@ -571,6 +801,7 @@ async function iniciar() {
   configurarNavegacao();
   configurarCobrinha();
   configurarTetris();
+  configurarDamas();
   configurarConfig();
   const dados = await obterConteudo();
   renderDesktop(dados);
