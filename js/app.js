@@ -137,6 +137,8 @@ function configurarPlayer() {
   });
 }
 
+const EMBUTIDO = window.parent !== window && /[?&]embutido=1/.test(location.search);
+
 function configurarNavegacao() {
   $all('.botao-voltar').forEach((btn) => {
     btn.addEventListener('click', () => {
@@ -144,6 +146,10 @@ function configurarNavegacao() {
       pararCobrinha();
       pararTetris();
       pararDamas();
+      if (EMBUTIDO && btn.dataset.voltar === 'desktop') {
+        window.parent.postMessage({ lumi: 'sair-jogos' }, location.origin);
+        return;
+      }
       if (btn.dataset.voltar) mostrarView(btn.dataset.voltar);
     });
   });
@@ -931,6 +937,13 @@ async function iniciar() {
   configurarConfig();
   const dados = await obterConteudo();
   renderDesktop(dados);
+
+  // Dentro da Lumi (iframe) só os jogos aparecem, e o "Voltar" devolve para ela.
+  if (EMBUTIDO) {
+    renderJogos(dados);
+    mostrarView('jogos');
+    return;
+  }
   mostrarView('desktop');
 
   if ('serviceWorker' in navigator) {
