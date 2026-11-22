@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <title>Área Infantil</title>
-<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/style.css?v=5">
 </head>
 <body>
 
@@ -28,48 +28,52 @@
   <div id="grade-jogos" class="grade"></div>
 </main>
 
-<main id="view-cobrinha" class="view hidden">
-  <button class="botao-voltar" data-voltar="jogos">← Voltar</button>
-  <div class="jogo-cobrinha">
-    <span id="cobrinha-pontos" class="jogo-pontos">Pontos: 0</span>
-    <canvas id="cobrinha-canvas" width="338" height="338"></canvas>
-    <div id="cobrinha-fim" class="jogo-fim hidden">
-      <p>Fim de jogo!</p>
-      <div class="modal-botoes">
-        <button id="cobrinha-reiniciar" class="botao-play-pequeno">Jogar de novo</button>
-        <button id="cobrinha-fim-voltar" class="botao-voltar">Voltar</button>
-      </div>
-    </div>
-    <div class="dpad">
-      <button class="dpad-btn dpad-cima" data-dir="cima" aria-label="Cima">▲</button>
-      <div class="dpad-meio">
-        <button class="dpad-btn dpad-esquerda" data-dir="esquerda" aria-label="Esquerda">◀</button>
-        <button class="dpad-btn dpad-direita" data-dir="direita" aria-label="Direita">▶</button>
-      </div>
-      <button class="dpad-btn dpad-baixo" data-dir="baixo" aria-label="Baixo">▼</button>
+<main id="view-cobrinha" class="view view-jogo hidden">
+  <div class="jogo-topo">
+    <button class="botao-voltar" data-voltar="jogos" aria-label="Voltar">←</button>
+    <span class="jogo-nome">COBRINHA</span>
+    <span id="cobrinha-pontos" class="jogo-pontos">0000</span>
+  </div>
+  <div id="cobrinha-tela" class="jogo-tela">
+    <canvas id="cobrinha-canvas"></canvas>
+  </div>
+  <div class="controles controles-cruz">
+    <button class="tecla tecla-cima" data-dir="cima" aria-label="Cima">▲</button>
+    <button class="tecla tecla-esquerda" data-dir="esquerda" aria-label="Esquerda">◀</button>
+    <button class="tecla tecla-direita" data-dir="direita" aria-label="Direita">▶</button>
+    <button class="tecla tecla-baixo" data-dir="baixo" aria-label="Baixo">▼</button>
+  </div>
+  <div id="cobrinha-fim" class="jogo-fim hidden">
+    <p>Fim de jogo!</p>
+    <p id="cobrinha-fim-pontos" class="jogo-fim-pontos"></p>
+    <div class="modal-botoes">
+      <button id="cobrinha-reiniciar" class="botao-play-pequeno">Jogar de novo</button>
+      <button id="cobrinha-fim-voltar" class="botao-voltar">Voltar</button>
     </div>
   </div>
 </main>
 
-<main id="view-tetris" class="view hidden">
-  <button class="botao-voltar" data-voltar="jogos">← Voltar</button>
-  <div class="jogo-tetris">
-    <span id="tetris-pontos" class="jogo-pontos">Pontos: 0</span>
-    <canvas id="tetris-canvas" width="180" height="320"></canvas>
-    <div id="tetris-fim" class="jogo-fim hidden">
-      <p>Fim de jogo!</p>
-      <div class="modal-botoes">
-        <button id="tetris-reiniciar" class="botao-play-pequeno">Jogar de novo</button>
-        <button id="tetris-fim-voltar" class="botao-voltar">Voltar</button>
-      </div>
-    </div>
-    <div class="dpad">
-      <button class="dpad-btn" data-tetris="girar" aria-label="Girar">↻</button>
-      <div class="dpad-meio">
-        <button class="dpad-btn" data-tetris="esquerda" aria-label="Esquerda">◀</button>
-        <button class="dpad-btn" data-tetris="direita" aria-label="Direita">▶</button>
-      </div>
-      <button class="dpad-btn" data-tetris="baixo" aria-label="Descer">▼</button>
+<main id="view-tetris" class="view view-jogo hidden">
+  <div class="jogo-topo">
+    <button class="botao-voltar" data-voltar="jogos" aria-label="Voltar">←</button>
+    <span class="jogo-nome">TETRIS</span>
+    <span id="tetris-pontos" class="jogo-pontos">0000</span>
+  </div>
+  <div id="tetris-tela" class="jogo-tela">
+    <canvas id="tetris-canvas"></canvas>
+  </div>
+  <div class="controles controles-tetris">
+    <button class="tecla" data-tetris="esquerda" aria-label="Esquerda">◀</button>
+    <button class="tecla" data-tetris="baixo" aria-label="Descer">▼</button>
+    <button class="tecla" data-tetris="direita" aria-label="Direita">▶</button>
+    <button class="tecla tecla-girar" data-tetris="girar" aria-label="Girar">↻</button>
+  </div>
+  <div id="tetris-fim" class="jogo-fim hidden">
+    <p>Fim de jogo!</p>
+    <p id="tetris-fim-pontos" class="jogo-fim-pontos"></p>
+    <div class="modal-botoes">
+      <button id="tetris-reiniciar" class="botao-play-pequeno">Jogar de novo</button>
+      <button id="tetris-fim-voltar" class="botao-voltar">Voltar</button>
     </div>
   </div>
 </main>
@@ -113,6 +117,6 @@
   </div>
 </main>
 
-<script src="js/app.js"></script>
+<script src="js/app.js?v=5"></script>
 </body>
 </html>

@@ -207,84 +207,140 @@ html, body {
   box-shadow: 0 1px 0 rgba(0, 0, 0, 0.12);
 }
 
-.jogo-cobrinha {
+/* --- Jogos em tela cheia, estilo Nokia --- */
+
+.view-jogo {
+  padding: 0;
+  background: #2b2d42;
+  align-items: stretch;
+}
+
+.jogo-topo {
+  flex: 0 0 auto;
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 14px;
-  width: 100%;
+  justify-content: space-between;
+  padding: 6px 10px;
+  color: #c7f0d8;
+  font-family: "Courier New", monospace;
+  font-weight: 700;
+  letter-spacing: 2px;
+}
+
+.jogo-topo .botao-voltar {
+  align-self: center;
+  margin: 0;
+  padding: 4px 16px;
+  font-size: 22px;
+  border-radius: 12px;
+}
+
+.jogo-nome {
+  font-size: 16px;
+  opacity: 0.7;
 }
 
 .jogo-pontos {
-  color: #2b2d42;
-  font-size: 4.5vw;
-  font-weight: 600;
+  font-size: 24px;
+  min-width: 3.2em;
+  text-align: right;
 }
 
-#cobrinha-canvas {
-  border-radius: 16px;
-  box-shadow: 0 6px 0 rgba(0, 0, 0, 0.12);
-  width: min(92vw, 400px);
-  max-height: 56vh;
-  aspect-ratio: 1 / 1;
-}
-
-.jogo-tetris {
+.jogo-tela {
+  flex: 1 1 auto;
+  min-height: 0;
+  margin: 0 8px;
+  background: #c7f0d8;
+  border: 4px solid #1b1c2b;
+  border-radius: 10px;
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 14px;
-  width: 100%;
+  justify-content: center;
+  overflow: hidden;
+  touch-action: none;
 }
 
-#tetris-canvas {
-  border-radius: 16px;
-  box-shadow: 0 6px 0 rgba(0, 0, 0, 0.12);
-  max-width: 60vw;
-  max-height: 52vh;
+.jogo-tela canvas {
+  display: block;
+}
+
+.controles {
+  flex: 0 0 auto;
+  padding: 10px 12px 14px;
+  display: grid;
+  gap: 8px;
+  touch-action: none;
+}
+
+.tecla {
+  border: none;
+  border-radius: 18px;
+  background: #e9ecf5;
+  box-shadow: 0 5px 0 #11121d;
+  color: #2b2d42;
+  font-size: 30px;
+  min-height: 62px;
+  touch-action: none;
+}
+
+.tecla.apertada,
+.tecla:active {
+  transform: translateY(4px);
+  box-shadow: 0 1px 0 #11121d;
+  background: #c7f0d8;
+}
+
+/* Cobrinha: cruz ocupando a largura toda */
+.controles-cruz {
+  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-areas:
+    ". cima ."
+    "esquerda baixo direita";
+}
+
+.tecla-cima { grid-area: cima; }
+.tecla-esquerda { grid-area: esquerda; }
+.tecla-direita { grid-area: direita; }
+.tecla-baixo { grid-area: baixo; }
+
+/* Tetris: setas à esquerda, girar grande à direita */
+.controles-tetris {
+  grid-template-columns: 1fr 1fr 1fr 1.3fr;
+}
+
+.controles-tetris .tecla {
+  min-height: 84px;
+}
+
+.tecla-girar {
+  background: #ff8fab;
+  color: #fff;
+  font-size: 40px;
+  border-radius: 50px;
 }
 
 .jogo-fim {
   position: fixed;
-  inset: 0;
-  background: rgba(254, 246, 230, 0.92);
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  background: rgba(254, 246, 230, 0.94);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 16px;
+  gap: 12px;
   color: #2b2d42;
-  font-size: 6vw;
+  font-size: 7vw;
   z-index: 5;
 }
 
-.dpad {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
-  margin-top: 4px;
-}
+.jogo-fim p { margin: 0; }
 
-.dpad-meio {
-  display: flex;
-  gap: 60px;
-}
-
-.dpad-btn {
-  width: 56px;
-  height: 56px;
-  border-radius: 16px;
-  border: none;
-  background: #ffffff;
-  box-shadow: 0 4px 0 rgba(0, 0, 0, 0.12);
-  font-size: 22px;
-  color: #2b2d42;
-}
-
-.dpad-btn:active {
-  transform: translateY(3px);
-  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.12);
+.jogo-fim-pontos {
+  font-size: 5vw;
+  font-weight: 700;
 }
 
 .jogo-damas {

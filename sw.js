@@ -1,4 +1,4 @@
-const CACHE_NAME = 'kiosk-v2';
+const CACHE_NAME = 'kiosk-v3';
 const APP_SHELL = ['./', 'index.html', 'css/style.css', 'js/app.js', 'content/content.json'];
 
 self.addEventListener('install', (event) => {
