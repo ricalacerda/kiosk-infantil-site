@@ -144,9 +144,87 @@ function configurarNavegacao() {
       pararCobrinha();
       pararTetris();
       pararDamas();
-      mostrarView(btn.dataset.voltar);
+      if (btn.dataset.voltar) mostrarView(btn.dataset.voltar);
     });
   });
+}
+
+// --- Jogos estilo Nokia: tela de cristal líquido ocupando o aparelho inteiro ---
+
+const LCD = { fundo: '#c7f0d8', tinta: '#43523d', apagado: 'rgba(67, 82, 61, 0.09)' };
+
+function ajustarCanvas(canvas, largura, altura) {
+  const dpr = window.devicePixelRatio || 1;
+  canvas.style.width = largura + 'px';
+  canvas.style.height = altura + 'px';
+  canvas.width = Math.round(largura * dpr);
+  canvas.height = Math.round(altura * dpr);
+  const ctx = canvas.getContext('2d');
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  return ctx;
+}
+
+// Um "pixel" de minigame: moldura fina com miolo cheio.
+function desenharBloco(ctx, px, py, cell, cor) {
+  const folga = Math.max(1, Math.round(cell * 0.06));
+  const borda = Math.max(1, Math.round(cell * 0.1));
+  const miolo = Math.round(cell * 0.24);
+  ctx.strokeStyle = cor;
+  ctx.lineWidth = borda;
+  ctx.strokeRect(px + folga + borda / 2, py + folga + borda / 2, cell - 2 * folga - borda, cell - 2 * folga - borda);
+  ctx.fillStyle = cor;
+  ctx.fillRect(px + miolo, py + miolo, cell - 2 * miolo, cell - 2 * miolo);
+}
+
+function formatarPontos(n) {
+  return String(n).padStart(4, '0');
+}
+
+// Tecla de toque: responde no encostar (não no soltar) e repete se ficar apertada.
+function ligarTecla(btn, acao, repetir) {
+  let espera = null;
+  let repeticao = null;
+  function soltar() {
+    clearTimeout(espera);
+    clearInterval(repeticao);
+    espera = null;
+    repeticao = null;
+    btn.classList.remove('apertada');
+  }
+  btn.addEventListener('pointerdown', (e) => {
+    e.preventDefault();
+    soltar();
+    btn.classList.add('apertada');
+    acao();
+    if (repetir) {
+      espera = setTimeout(() => { repeticao = setInterval(acao, 90); }, 260);
+    }
+  });
+  ['pointerup', 'pointercancel', 'pointerleave'].forEach((ev) => btn.addEventListener(ev, soltar));
+  btn.addEventListener('contextmenu', (e) => e.preventDefault());
+}
+
+// Deslizar o dedo na tela do jogo também vale como seta; toque curto vira "toque".
+function ligarDeslize(area, aoDeslizar, aoTocar) {
+  let inicio = null;
+  area.addEventListener('pointerdown', (e) => { inicio = { x: e.clientX, y: e.clientY }; });
+  area.addEventListener('pointerup', (e) => {
+    if (!inicio) return;
+    const dx = e.clientX - inicio.x;
+    const dy = e.clientY - inicio.y;
+    inicio = null;
+    if (Math.max(Math.abs(dx), Math.abs(dy)) < 20) {
+      if (aoTocar) aoTocar();
+      return;
+    }
+    if (Math.abs(dx) > Math.abs(dy)) aoDeslizar(dx > 0 ? 'direita' : 'esquerda');
+    else aoDeslizar(dy > 0 ? 'baixo' : 'cima');
+  });
+  area.addEventListener('pointercancel', () => { inicio = null; });
+}
+
+function viewVisivel(nome) {
+  return !$('#view-' + nome).classList.contains('hidden');
 }
 
 // --- Jogo da Cobrinha ---
@@ -154,9 +232,9 @@ function configurarNavegacao() {
 const cobrinha = {
   canvas: null,
   ctx: null,
-  cell: 26,
-  cols: 13,
-  linhas: 13,
+  cell: 20,
+  cols: 15,
+  linhas: 15,
   cobra: [],
   direcao: 'direita',
   proximaDirecao: 'direita',
@@ -164,6 +242,17 @@ const cobrinha = {
   pontos: 0,
   intervalId: null,
 };
+
+function medirCobrinha() {
+  const tela = $('#cobrinha-tela');
+  const largura = tela.clientWidth;
+  const altura = tela.clientHeight;
+  cobrinha.cols = 15;
+  cobrinha.cell = Math.max(8, Math.floor(largura / cobrinha.cols));
+  cobrinha.linhas = Math.max(10, Math.floor(altura / cobrinha.cell));
+  cobrinha.canvas = $('#cobrinha-canvas');
+  cobrinha.ctx = ajustarCanvas(cobrinha.canvas, cobrinha.cols * cobrinha.cell, cobrinha.linhas * cobrinha.cell);
+}
 
 function posicionarComidaCobrinha() {
   let pos;
@@ -178,23 +267,26 @@ function posicionarComidaCobrinha() {
 
 function desenharCobrinha() {
   const { ctx, cell, cols, linhas } = cobrinha;
-  ctx.fillStyle = '#fef6e4';
+  ctx.fillStyle = LCD.fundo;
   ctx.fillRect(0, 0, cols * cell, linhas * cell);
 
-  ctx.fillStyle = '#ff8fab';
-  ctx.beginPath();
-  ctx.arc(
-    cobrinha.comida.x * cell + cell / 2,
-    cobrinha.comida.y * cell + cell / 2,
-    cell / 2.4,
-    0,
-    Math.PI * 2
-  );
-  ctx.fill();
+  // Comida: quatro pontinhos em cruz, como no Snake do Nokia.
+  const t = cell / 3;
+  const cx = cobrinha.comida.x * cell;
+  const cy = cobrinha.comida.y * cell;
+  ctx.fillStyle = LCD.tinta;
+  ctx.fillRect(cx + t, cy, t, t);
+  ctx.fillRect(cx, cy + t, t, t);
+  ctx.fillRect(cx + 2 * t, cy + t, t, t);
+  ctx.fillRect(cx + t, cy + 2 * t, t, t);
 
   cobrinha.cobra.forEach((seg, i) => {
-    ctx.fillStyle = i === 0 ? '#2b2d42' : '#588157';
-    ctx.fillRect(seg.x * cell + 1, seg.y * cell + 1, cell - 2, cell - 2);
+    if (i === 0) {
+      ctx.fillStyle = LCD.tinta;
+      ctx.fillRect(seg.x * cell + 1, seg.y * cell + 1, cell - 2, cell - 2);
+    } else {
+      desenharBloco(ctx, seg.x * cell, seg.y * cell, cell, LCD.tinta);
+    }
   });
 }
 
@@ -220,7 +312,7 @@ function tickCobrinha() {
 
   if (cabeca.x === cobrinha.comida.x && cabeca.y === cobrinha.comida.y) {
     cobrinha.pontos += 1;
-    $('#cobrinha-pontos').textContent = `Pontos: ${cobrinha.pontos}`;
+    $('#cobrinha-pontos').textContent = formatarPontos(cobrinha.pontos);
     posicionarComidaCobrinha();
   } else {
     cobrinha.cobra.pop();
@@ -231,6 +323,7 @@ function tickCobrinha() {
 
 function fimDeJogoCobrinha() {
   pararCobrinha();
+  $('#cobrinha-fim-pontos').textContent = `Pontos: ${cobrinha.pontos}`;
   $('#cobrinha-fim').classList.remove('hidden');
 }
 
@@ -249,80 +342,77 @@ function pararCobrinha() {
 
 function iniciarCobrinha() {
   pararCobrinha();
-  if (!cobrinha.canvas) {
-    cobrinha.canvas = $('#cobrinha-canvas');
-    cobrinha.ctx = cobrinha.canvas.getContext('2d');
-  }
+  $('#cobrinha-fim').classList.add('hidden');
+  medirCobrinha();
+  const meioX = Math.floor(cobrinha.cols / 2);
+  const meioY = Math.floor(cobrinha.linhas / 2);
   cobrinha.cobra = [
-    { x: 6, y: 6 },
-    { x: 5, y: 6 },
-    { x: 4, y: 6 },
+    { x: meioX, y: meioY },
+    { x: meioX - 1, y: meioY },
+    { x: meioX - 2, y: meioY },
   ];
   cobrinha.direcao = 'direita';
   cobrinha.proximaDirecao = 'direita';
   cobrinha.pontos = 0;
-  $('#cobrinha-pontos').textContent = 'Pontos: 0';
-  $('#cobrinha-fim').classList.add('hidden');
+  $('#cobrinha-pontos').textContent = formatarPontos(0);
   posicionarComidaCobrinha();
   desenharCobrinha();
-  cobrinha.intervalId = setInterval(tickCobrinha, 180);
+  cobrinha.intervalId = setInterval(tickCobrinha, 190);
 }
 
 function configurarCobrinha() {
-  $all('#view-cobrinha .dpad-btn').forEach((btn) => {
-    btn.addEventListener('click', () => mudarDirecaoCobrinha(btn.dataset.dir));
+  $all('#view-cobrinha .tecla').forEach((btn) => {
+    ligarTecla(btn, () => mudarDirecaoCobrinha(btn.dataset.dir), false);
   });
   $('#cobrinha-reiniciar').addEventListener('click', iniciarCobrinha);
   $('#cobrinha-fim-voltar').addEventListener('click', () => {
     pararCobrinha();
     mostrarView('jogos');
   });
-
-  let toqueInicio = null;
-  const canvas = $('#cobrinha-canvas');
-  canvas.addEventListener('touchstart', (e) => {
-    const t = e.changedTouches[0];
-    toqueInicio = { x: t.clientX, y: t.clientY };
-  });
-  canvas.addEventListener('touchend', (e) => {
-    if (!toqueInicio) return;
-    const t = e.changedTouches[0];
-    const dx = t.clientX - toqueInicio.x;
-    const dy = t.clientY - toqueInicio.y;
-    if (Math.max(Math.abs(dx), Math.abs(dy)) < 20) return;
-    if (Math.abs(dx) > Math.abs(dy)) {
-      mudarDirecaoCobrinha(dx > 0 ? 'direita' : 'esquerda');
-    } else {
-      mudarDirecaoCobrinha(dy > 0 ? 'baixo' : 'cima');
-    }
-    toqueInicio = null;
-  });
+  ligarDeslize($('#cobrinha-tela'), mudarDirecaoCobrinha);
 }
 
 // --- Jogo de Tetris ---
 
 const TETROMINOS = [
-  { matriz: [[1, 1, 1, 1]], cor: '#4cc9f0' },
-  { matriz: [[1, 1], [1, 1]], cor: '#ffd166' },
-  { matriz: [[0, 1, 0], [1, 1, 1]], cor: '#9d4edd' },
-  { matriz: [[0, 1, 1], [1, 1, 0]], cor: '#90be6d' },
-  { matriz: [[1, 1, 0], [0, 1, 1]], cor: '#f94144' },
-  { matriz: [[1, 0, 0], [1, 1, 1]], cor: '#577590' },
-  { matriz: [[0, 0, 1], [1, 1, 1]], cor: '#f3722c' },
+  [[1, 1, 1, 1]],
+  [[1, 1], [1, 1]],
+  [[0, 1, 0], [1, 1, 1]],
+  [[0, 1, 1], [1, 1, 0]],
+  [[1, 1, 0], [0, 1, 1]],
+  [[1, 0, 0], [1, 1, 1]],
+  [[0, 0, 1], [1, 1, 1]],
 ];
+
+const TETRIS_LADO = 4.6; // largura do painel lateral, em blocos
 
 const tetris = {
   canvas: null,
   ctx: null,
   cell: 18,
   cols: 10,
-  linhas: 17,
+  linhas: 20,
+  larguraTotal: 0,
   tabuleiro: [],
   peca: null,
+  proxima: null,
   pontos: 0,
+  linhasFeitas: 0,
   velocidade: 600,
   intervalId: null,
 };
+
+function medirTetris() {
+  const tela = $('#tetris-tela');
+  const largura = tela.clientWidth;
+  const altura = tela.clientHeight;
+  tetris.cols = 10;
+  tetris.cell = Math.max(8, Math.floor(Math.min(altura / 20, largura / (tetris.cols + TETRIS_LADO))));
+  tetris.linhas = Math.max(16, Math.min(24, Math.floor(altura / tetris.cell)));
+  tetris.larguraTotal = Math.max(largura, Math.ceil(tetris.cell * (tetris.cols + 3)));
+  tetris.canvas = $('#tetris-canvas');
+  tetris.ctx = ajustarCanvas(tetris.canvas, tetris.larguraTotal, tetris.linhas * tetris.cell);
+}
 
 function tabuleiroVazioTetris() {
   return Array.from({ length: tetris.linhas }, () => Array(tetris.cols).fill(null));
@@ -342,12 +432,16 @@ function rotarMatriz(matriz) {
   return resultado;
 }
 
-function novaPecaTetris() {
+function sortearMatrizTetris() {
   const modelo = TETROMINOS[Math.floor(Math.random() * TETROMINOS.length)];
-  const matriz = modelo.matriz.map((linha) => linha.slice());
+  return modelo.map((linha) => linha.slice());
+}
+
+function novaPecaTetris() {
+  const matriz = tetris.proxima || sortearMatrizTetris();
+  tetris.proxima = sortearMatrizTetris();
   return {
     matriz,
-    cor: modelo.cor,
     x: Math.floor((tetris.cols - matriz[0].length) / 2),
     y: 0,
   };
@@ -366,32 +460,67 @@ function colisaoTetris(matriz, x, y) {
   return false;
 }
 
+function nivelTetris() {
+  return 1 + Math.floor(tetris.pontos / 300);
+}
+
 function desenharTetris() {
   const { ctx, cell, cols, linhas } = tetris;
-  ctx.fillStyle = '#fef6e4';
-  ctx.fillRect(0, 0, tetris.canvas.width, tetris.canvas.height);
+  const larguraCampo = cols * cell;
+  const altura = linhas * cell;
+  ctx.fillStyle = LCD.fundo;
+  ctx.fillRect(0, 0, tetris.larguraTotal, altura);
 
   for (let y = 0; y < linhas; y++) {
     for (let x = 0; x < cols; x++) {
-      if (tetris.tabuleiro[y][x]) {
-        ctx.fillStyle = tetris.tabuleiro[y][x];
-        ctx.fillRect(x * cell + 1, y * cell + 1, cell - 2, cell - 2);
-      }
+      desenharBloco(ctx, x * cell, y * cell, cell, tetris.tabuleiro[y][x] ? LCD.tinta : LCD.apagado);
     }
   }
 
   if (tetris.peca) {
-    ctx.fillStyle = tetris.peca.cor;
     tetris.peca.matriz.forEach((linha, r) => {
       linha.forEach((val, c) => {
         if (!val) return;
         const px = tetris.peca.x + c;
         const py = tetris.peca.y + r;
         if (py < 0) return;
-        ctx.fillRect(px * cell + 1, py * cell + 1, cell - 2, cell - 2);
+        desenharBloco(ctx, px * cell, py * cell, cell, LCD.tinta);
       });
     });
   }
+
+  // Painel lateral: divisória, próxima peça, nível e linhas.
+  ctx.fillStyle = LCD.tinta;
+  ctx.fillRect(larguraCampo + 2, 0, 2, altura);
+
+  const ladoX = larguraCampo + 4;
+  const ladoLargura = tetris.larguraTotal - ladoX;
+  const centro = ladoX + ladoLargura / 2;
+  const fonte = Math.max(10, Math.round(cell * 0.62));
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'top';
+  ctx.font = `700 ${fonte}px "Courier New", monospace`;
+  ctx.fillText('PRÓXIMA', centro, cell * 0.5);
+
+  const mini = Math.min(cell, Math.floor((ladoLargura - 8) / 4));
+  if (tetris.proxima) {
+    const m = tetris.proxima;
+    const ox = centro - (m[0].length * mini) / 2;
+    const oy = cell * 1.6 + ((2 - m.length) * mini) / 2;
+    m.forEach((linha, r) => linha.forEach((val, c) => {
+      if (val) desenharBloco(ctx, ox + c * mini, oy + r * mini, mini, LCD.tinta);
+    }));
+  }
+
+  const fonteNumero = Math.round(fonte * 1.5);
+  let y = cell * 1.6 + 2 * mini + cell * 0.9;
+  [['NÍVEL', nivelTetris()], ['LINHAS', tetris.linhasFeitas]].forEach(([rotulo, valor]) => {
+    ctx.font = `700 ${fonte}px "Courier New", monospace`;
+    ctx.fillText(rotulo, centro, y);
+    ctx.font = `700 ${fonteNumero}px "Courier New", monospace`;
+    ctx.fillText(String(valor), centro, y + fonte * 1.2);
+    y += fonte * 1.2 + fonteNumero + cell * 0.8;
+  });
 }
 
 function fixarPecaTetris() {
@@ -400,7 +529,7 @@ function fixarPecaTetris() {
       if (!val) return;
       const py = tetris.peca.y + r;
       const px = tetris.peca.x + c;
-      if (py >= 0) tetris.tabuleiro[py][px] = tetris.peca.cor;
+      if (py >= 0) tetris.tabuleiro[py][px] = 1;
     });
   });
 }
@@ -417,8 +546,9 @@ function limparLinhasTetris() {
     tetris.tabuleiro.unshift(Array(tetris.cols).fill(null));
   }
   if (linhasCompletas > 0) {
+    tetris.linhasFeitas += linhasCompletas;
     tetris.pontos += pontosPorLinhas[linhasCompletas] || linhasCompletas * 200;
-    $('#tetris-pontos').textContent = `Pontos: ${tetris.pontos}`;
+    $('#tetris-pontos').textContent = formatarPontos(tetris.pontos);
     tetris.velocidade = Math.max(180, 600 - Math.floor(tetris.pontos / 300) * 30);
     reiniciarIntervaloTetris();
   }
@@ -437,6 +567,7 @@ function tickTetris() {
     limparLinhasTetris();
     tetris.peca = novaPecaTetris();
     if (colisaoTetris(tetris.peca.matriz, tetris.peca.x, tetris.peca.y)) {
+      desenharTetris();
       fimDeJogoTetris();
       return;
     }
@@ -446,18 +577,24 @@ function tickTetris() {
 
 function fimDeJogoTetris() {
   pararTetris();
+  $('#tetris-fim-pontos').textContent = `Pontos: ${tetris.pontos}`;
   $('#tetris-fim').classList.remove('hidden');
 }
 
+function tetrisRodando() {
+  return Boolean(tetris.intervalId && tetris.peca);
+}
+
 function moverTetris(dx) {
-  if (!tetris.peca || !colisaoTetris(tetris.peca.matriz, tetris.peca.x + dx, tetris.peca.y)) {
+  if (!tetrisRodando()) return;
+  if (!colisaoTetris(tetris.peca.matriz, tetris.peca.x + dx, tetris.peca.y)) {
     tetris.peca.x += dx;
     desenharTetris();
   }
 }
 
 function descerTetris() {
-  if (!tetris.peca) return;
+  if (!tetrisRodando()) return;
   if (!colisaoTetris(tetris.peca.matriz, tetris.peca.x, tetris.peca.y + 1)) {
     tetris.peca.y += 1;
     desenharTetris();
@@ -465,19 +602,18 @@ function descerTetris() {
 }
 
 function girarTetris() {
-  if (!tetris.peca) return;
+  if (!tetrisRodando()) return;
   const novaMatriz = rotarMatriz(tetris.peca.matriz);
-  let novoX = tetris.peca.x;
-  if (colisaoTetris(novaMatriz, novoX, tetris.peca.y)) {
-    novoX = tetris.peca.x - 1;
+  const tentativas = [0, -1, 1, -2, 2];
+  for (let i = 0; i < tentativas.length; i++) {
+    const novoX = tetris.peca.x + tentativas[i];
+    if (!colisaoTetris(novaMatriz, novoX, tetris.peca.y)) {
+      tetris.peca.matriz = novaMatriz;
+      tetris.peca.x = novoX;
+      desenharTetris();
+      return;
+    }
   }
-  if (colisaoTetris(novaMatriz, novoX, tetris.peca.y)) {
-    novoX = tetris.peca.x + 1;
-  }
-  if (colisaoTetris(novaMatriz, novoX, tetris.peca.y)) return;
-  tetris.peca.matriz = novaMatriz;
-  tetris.peca.x = novoX;
-  desenharTetris();
 }
 
 function pararTetris() {
@@ -489,57 +625,47 @@ function pararTetris() {
 
 function iniciarTetris() {
   pararTetris();
-  if (!tetris.canvas) {
-    tetris.canvas = $('#tetris-canvas');
-    tetris.ctx = tetris.canvas.getContext('2d');
-  }
+  $('#tetris-fim').classList.add('hidden');
+  medirTetris();
   tetris.tabuleiro = tabuleiroVazioTetris();
   tetris.pontos = 0;
+  tetris.linhasFeitas = 0;
   tetris.velocidade = 600;
-  $('#tetris-pontos').textContent = 'Pontos: 0';
-  $('#tetris-fim').classList.add('hidden');
+  $('#tetris-pontos').textContent = formatarPontos(0);
+  tetris.proxima = null;
   tetris.peca = novaPecaTetris();
   desenharTetris();
   reiniciarIntervaloTetris();
 }
 
+function acaoTetris(acao) {
+  if (acao === 'esquerda') moverTetris(-1);
+  if (acao === 'direita') moverTetris(1);
+  if (acao === 'girar' || acao === 'cima') girarTetris();
+  if (acao === 'baixo') descerTetris();
+}
+
 function configurarTetris() {
-  $all('#view-tetris .dpad-btn').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      const acao = btn.dataset.tetris;
-      if (acao === 'esquerda') moverTetris(-1);
-      if (acao === 'direita') moverTetris(1);
-      if (acao === 'girar') girarTetris();
-      if (acao === 'baixo') descerTetris();
-    });
+  $all('#view-tetris .tecla').forEach((btn) => {
+    const acao = btn.dataset.tetris;
+    ligarTecla(btn, () => acaoTetris(acao), acao !== 'girar');
   });
   $('#tetris-reiniciar').addEventListener('click', iniciarTetris);
   $('#tetris-fim-voltar').addEventListener('click', () => {
     pararTetris();
     mostrarView('jogos');
   });
-
-  let toqueInicio = null;
-  const canvas = $('#tetris-canvas');
-  canvas.addEventListener('touchstart', (e) => {
-    const t = e.changedTouches[0];
-    toqueInicio = { x: t.clientX, y: t.clientY };
-  });
-  canvas.addEventListener('touchend', (e) => {
-    if (!toqueInicio) return;
-    const t = e.changedTouches[0];
-    const dx = t.clientX - toqueInicio.x;
-    const dy = t.clientY - toqueInicio.y;
-    if (Math.max(Math.abs(dx), Math.abs(dy)) < 20) {
-      girarTetris();
-    } else if (Math.abs(dx) > Math.abs(dy)) {
-      moverTetris(dx > 0 ? 1 : -1);
-    } else if (dy > 0) {
-      descerTetris();
-    }
-    toqueInicio = null;
-  });
+  ligarDeslize($('#tetris-tela'), acaoTetris, girarTetris);
 }
+
+// Teclado (para testar no computador).
+document.addEventListener('keydown', (e) => {
+  const setas = { ArrowUp: 'cima', ArrowDown: 'baixo', ArrowLeft: 'esquerda', ArrowRight: 'direita' };
+  const dir = setas[e.key];
+  if (!dir) return;
+  if (viewVisivel('cobrinha')) mudarDirecaoCobrinha(dir);
+  else if (viewVisivel('tetris')) acaoTetris(dir);
+});
 
 // --- Jogo de Damas ---
 
